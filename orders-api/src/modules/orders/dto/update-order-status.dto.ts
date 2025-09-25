@@ -7,10 +7,8 @@ export class UpdateOrderStatusDto {
     enum: OrderStatus,
     description: 'Novo status do pedido',
     example: OrderStatus.PROCESSING,
-    enumName: 'OrderStatus'
+    enumName: 'OrderStatus',
   })
   @IsEnum(OrderStatus)
   status: OrderStatus;
 }
-
-

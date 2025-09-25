@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { 
+import {
   ApiTags,
   ApiOperation,
   ApiResponse,
@@ -54,7 +54,7 @@ export class OrdersController {
       ],
       createdAt: '2025-09-25T01:21:15.092Z',
       updatedAt: '2025-09-25T01:21:15.092Z',
-    }
+    },
   })
   @ApiBadRequestResponse({
     description: 'Dados inválidos fornecidos',
@@ -62,14 +62,14 @@ export class OrdersController {
       statusCode: 400,
       message: ['items must contain at least 1 elements'],
       error: 'Bad Request',
-    }
+    },
   })
   @ApiInternalServerErrorResponse({
     description: 'Erro interno do servidor',
     example: {
       statusCode: 500,
       message: 'Internal server error',
-    }
+    },
   })
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
@@ -184,7 +184,7 @@ export class OrdersController {
       statusCode: 404,
       message: 'Order not found',
       error: 'Not Found',
-    }
+    },
   })
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

@@ -15,5 +15,3 @@ export default {
   synchronize: false,
   logging: false,
 } as DataSourceOptions;
-
-

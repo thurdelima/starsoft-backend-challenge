@@ -16,5 +16,3 @@ import { Client } from '@elastic/elasticsearch';
   exports: ['ELASTIC_CLIENT'],
 })
 export class ElasticsearchModule {}
-
-

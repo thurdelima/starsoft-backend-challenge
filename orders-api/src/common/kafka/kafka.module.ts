@@ -21,5 +21,3 @@ import { Kafka, KafkaConfig } from 'kafkajs';
   exports: ['KAFKA_PRODUCER'],
 })
 export class KafkaModule {}
-
-

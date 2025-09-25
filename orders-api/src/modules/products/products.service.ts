@@ -7,7 +7,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(@InjectRepository(Product) private readonly repo: Repository<Product>) {}
+  constructor(
+    @InjectRepository(Product) private readonly repo: Repository<Product>,
+  ) {}
 
   create(dto: CreateProductDto) {
     const product = this.repo.create(dto);
@@ -34,5 +36,3 @@ export class ProductsService {
     await this.repo.delete(id);
   }
 }
-
-

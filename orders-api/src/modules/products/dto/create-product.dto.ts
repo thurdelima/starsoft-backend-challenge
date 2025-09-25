@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsNumberString, IsPositive, IsString, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumberString,
+  IsPositive,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'Fone de Ouvido Bluetooth' })
@@ -7,7 +14,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: '199.90', description: 'Preço como string decimal (duas casas)' })
+  @ApiProperty({
+    example: '199.90',
+    description: 'Preço como string decimal (duas casas)',
+  })
   @IsString()
   @IsNumberString()
   price: string;
@@ -17,5 +27,3 @@ export class CreateProductDto {
   @IsPositive()
   stockQty: number;
 }
-
-

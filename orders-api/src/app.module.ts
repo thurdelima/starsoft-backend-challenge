@@ -15,7 +15,12 @@ import { ProductsModule } from './modules/products/products.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    LoggerModule.forRoot({ pinoHttp: { transport: { target: 'pino-pretty' }, level: process.env.NODE_ENV === 'production' ? 'info' : 'debug' } }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: { target: 'pino-pretty' },
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+      },
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
