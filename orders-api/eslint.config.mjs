@@ -36,6 +36,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-function-type": 'off',
       "@typescript-eslint/no-unsafe-enum-comparison": 'off',
       "@typescript-eslint/no-unsafe-index-signature": 'off',
+      "@typescript-eslint/no-unused-vars": 'off',
     },
   },
 );

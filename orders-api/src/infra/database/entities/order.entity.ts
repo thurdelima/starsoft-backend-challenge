@@ -47,6 +47,13 @@ export class Order {
   })
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Indica se o pedido foi deletado (soft delete)',
+    example: false
+  })
+  @Column({ type: 'boolean', default: false })
+  deleted: boolean;
 }
 
 

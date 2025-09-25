@@ -34,6 +34,7 @@ type IndexedOrderDoc = {
   id: string;
   status: OrderStatus;
   createdAt: string | Date;
+  deleted: boolean;
   items: IndexedOrderItemDoc[];
 };
 
@@ -41,7 +42,8 @@ type IndexedOrderDoc = {
 export class OrdersService {
   constructor(
     @InjectRepository(Order) private readonly ordersRepo: Repository<Order>,
-    @InjectRepository(OrderItem) private readonly itemsRepo: Repository<OrderItem>,
+    @InjectRepository(OrderItem)
+    private readonly itemsRepo: Repository<OrderItem>,
     @Inject('KAFKA_PRODUCER') private readonly producer: Producer,
     @Inject('ELASTIC_CLIENT') private readonly es: ElasticClient,
   ) {}
@@ -52,10 +54,16 @@ export class OrdersService {
     return await this.ordersRepo.manager.transaction(async (trx) => {
       const ordersRepo = trx.getRepository(Order);
 
-      const order = ordersRepo.create({ status: dto.status ?? OrderStatus.PENDING });
+      const order = ordersRepo.create({
+        status: dto.status ?? OrderStatus.PENDING,
+      });
       const savedOrder = await ordersRepo.save(order);
 
-      const savedItems = await this.validateOrderItemsForCreate(dto, savedOrder, trx);
+      const savedItems = await this.validateOrderItemsForCreate(
+        dto,
+        savedOrder,
+        trx,
+      );
       savedOrder.items = savedItems;
 
       const leanItems = savedItems.map((it) => ({
@@ -83,11 +91,17 @@ export class OrdersService {
   }
 
   async findAll(): Promise<Order[]> {
-    return this.ordersRepo.find();
+    return this.ordersRepo.find({
+      where: { deleted: false },
+      relations: ['items', 'items.product'],
+    });
   }
 
   async findOne(id: string): Promise<Order> {
-    const order = await this.ordersRepo.findOne({ where: { id } });
+    const order = await this.ordersRepo.findOne({
+      where: { id, deleted: false },
+      relations: ['items', 'items.product'],
+    });
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
@@ -100,15 +114,32 @@ export class OrdersService {
     }
 
     if (dto.items) {
-      order.items = await this.validateOrderItemsForUpdate(dto, order, this.ordersRepo.manager);
+      order.items = await this.validateOrderItemsForUpdate(
+        dto,
+        order,
+        this.ordersRepo.manager,
+      );
     }
 
     const saved = await this.ordersRepo.save(order);
 
-    const leanItemsUpd = (saved.items || []).map((it) => ({ productId: it.product.id, quantity: it.quantity, price: it.price }));
+    const leanItemsUpd = (saved.items || []).map((it) => ({
+      productId: it.product.id,
+      quantity: it.quantity,
+      price: it.price,
+    }));
     await this.producer.send({
       topic: 'order_updated',
-      messages: [{ key: saved.id, value: JSON.stringify({ id: saved.id, status: saved.status, items: leanItemsUpd }) }],
+      messages: [
+        {
+          key: saved.id,
+          value: JSON.stringify({
+            id: saved.id,
+            status: saved.status,
+            items: leanItemsUpd,
+          }),
+        },
+      ],
     });
 
     await this.indexOrder(saved);
@@ -116,13 +147,21 @@ export class OrdersService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.itemsRepo.delete({ order: { id } as Order });
-    await this.ordersRepo.delete(id);
-    await this.es.delete({ index: 'orders', id }).catch(() => undefined);
+    const order = await this.findOne(id);
+    order.deleted = true;
+    await this.ordersRepo.save(order);
+    await this.indexOrder(order);
   }
 
-  async search(params: { id?: string; status?: OrderStatus; fromDate?: string; toDate?: string; item?: string }) {
+  async search(params: {
+    id?: string;
+    status?: OrderStatus;
+    fromDate?: string;
+    toDate?: string;
+    item?: string;
+  }) {
     const must: Array<Record<string, unknown>> = [];
+    must.push({ term: { deleted: false } });
     if (params.id) must.push({ term: { id: params.id } });
     if (params.status) must.push({ term: { status: params.status } });
     if (params.fromDate || params.toDate) {
@@ -136,7 +175,14 @@ export class OrdersService {
       });
     }
     if (params.item) {
-      must.push({ nested: { path: 'items', query: { bool: { must: [{ match: { 'items.productId': params.item } }] } } } });
+      must.push({
+        nested: {
+          path: 'items',
+          query: {
+            bool: { must: [{ match: { 'items.productId': params.item } }] },
+          },
+        },
+      });
     }
 
     const result = await this.es.search<IndexedOrderDoc>({
@@ -155,8 +201,22 @@ export class OrdersService {
 
   private async indexOrder(order: Order): Promise<void> {
     await this.ensureIndex();
-    const docItems = (order.items || []).map((it) => ({ productId: it.product?.id, quantity: it.quantity, price: it.price }));
-    await this.es.index({ index: 'orders', id: order.id, document: { id: order.id, status: order.status, createdAt: order.createdAt, items: docItems } });
+    const docItems = (order.items || []).map((it) => ({
+      productId: it.product?.id,
+      quantity: it.quantity,
+      price: it.price,
+    }));
+    await this.es.index({
+      index: 'orders',
+      id: order.id,
+      document: {
+        id: order.id,
+        status: order.status,
+        createdAt: order.createdAt,
+        deleted: order.deleted,
+        items: docItems,
+      },
+    });
   }
 
   private buildOrderResponse(order: Order): OrderView {
@@ -176,55 +236,102 @@ export class OrdersService {
     };
   }
 
-  private async validateOrderItemsForCreate(dto: CreateOrderDto, order: Order, trx: EntityManager): Promise<OrderItem[]> {
+  private async validateOrderItemsForCreate(
+    dto: CreateOrderDto,
+    order: Order,
+    trx: EntityManager,
+  ): Promise<OrderItem[]> {
     const itemsRepo = trx.getRepository(OrderItem);
     const productsRepo = trx.getRepository(Product);
     const itemsToSave: OrderItem[] = [];
+
     for (const i of dto.items) {
-      const product = await productsRepo.findOne({ where: { id: i.productId } });
-      if (!product) throw new NotFoundException(`Product not found: ${i.productId}`);
-      if (product.stockQty < i.quantity) throw new NotFoundException(`Insufficient stock for product ${product.id}`);
-      const item = itemsRepo.create({ order, product, quantity: i.quantity, price: i.price });
+      const product = await productsRepo.findOne({
+        where: { id: i.productId },
+      });
+      if (!product)
+        throw new NotFoundException(`Product not found: ${i.productId}`);
+      if (product.stockQty < i.quantity)
+        throw new NotFoundException(
+          `Insufficient stock for product ${product.id}. Available: ${product.stockQty}, Requested: ${i.quantity}`,
+        );
+
+      // Debitar estoque do produto
+      product.stockQty -= i.quantity;
+      await productsRepo.save(product);
+
+      const item = itemsRepo.create({
+        order,
+        product,
+        quantity: i.quantity,
+        price: i.price,
+      });
       itemsToSave.push(item);
     }
     return itemsRepo.save(itemsToSave);
   }
 
-  private async validateOrderItemsForUpdate(dto: UpdateOrderDto, order: Order, trx: EntityManager): Promise<OrderItem[]> {
+  private async validateOrderItemsForUpdate(
+    dto: UpdateOrderDto,
+    order: Order,
+    trx: EntityManager,
+  ): Promise<OrderItem[]> {
     const itemsRepo = trx.getRepository(OrderItem);
     const productsRepo = trx.getRepository(Product);
-    const newItems: OrderItem[] = [];
-    for (const i of dto.items ?? []) {
-      let item: OrderItem | null = null;
-      if (i.id) {
-        item = await itemsRepo.findOne({ where: { id: i.id } });
-      }
-      if (!item) {
-        item = itemsRepo.create();
-      }
 
-      let product: Product | null = item.product ?? null;
-      if (i.productId) {
-        product = await productsRepo.findOne({ where: { id: i.productId } });
-        if (!product) throw new NotFoundException(`Product not found: ${i.productId}`);
-      }
-      if (!product) throw new NotFoundException('Product is required');
+    const existingItems = await itemsRepo.find({
+      where: { order: { id: order.id } as Order },
+      relations: ['product'],
+    });
 
-      if (product.stockQty < i.quantity) {
-        throw new NotFoundException(`Insufficient stock for product ${product.id}`);
+    for (const existingItem of existingItems) {
+      const product = await productsRepo.findOne({
+        where: { id: existingItem.product.id },
+      });
+      if (product) {
+        product.stockQty += existingItem.quantity;
+        await productsRepo.save(product);
       }
-
-      item.order = order;
-      item.product = product;
-      item.quantity = i.quantity;
-      item.price = i.price;
-      newItems.push(item);
     }
 
     await itemsRepo.delete({ order: { id: order.id } as Order });
+    const newItems: OrderItem[] = [];
+    for (const i of dto.items ?? []) {
+      let product: Product | null = null;
+
+      if (i.productId) {
+        product = await productsRepo.findOne({ where: { id: i.productId } });
+        if (!product)
+          throw new NotFoundException(`Product not found: ${i.productId}`);
+      } else if (i.id) {
+        const existingItem = existingItems.find((item) => item.id === i.id);
+        if (existingItem) {
+          product = existingItem.product;
+        }
+      }
+
+      if (!product) throw new NotFoundException('Product is required');
+
+      if (product.stockQty < i.quantity) {
+        throw new NotFoundException(
+          `Insufficient stock for product ${product.id}. Available: ${product.stockQty}, Requested: ${i.quantity}`,
+        );
+      }
+
+      product.stockQty -= i.quantity;
+      await productsRepo.save(product);
+
+      const item = itemsRepo.create({
+        order,
+        product,
+        quantity: i.quantity,
+        price: i.price,
+      });
+      newItems.push(item);
+    }
+
     return itemsRepo.save(newItems);
   }
-
 
   private async ensureIndex() {
     if (this.indexEnsured) return;
@@ -237,6 +344,7 @@ export class OrdersService {
             id: { type: 'keyword' },
             status: { type: 'keyword' },
             createdAt: { type: 'date' },
+            deleted: { type: 'boolean' },
             items: {
               type: 'nested',
               properties: {
@@ -252,5 +360,3 @@ export class OrdersService {
     this.indexEnsured = true;
   }
 }
-
-

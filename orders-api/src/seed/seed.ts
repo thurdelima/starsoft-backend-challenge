@@ -25,19 +25,14 @@ export async function runSeed(): Promise<void> {
   await AppDataSource.destroy();
 }
 
-// Allow running directly: ts-node src/seed/seed.ts
 if (require.main === module) {
   runSeed()
     .then(() => {
-      // eslint-disable-next-line no-console
       console.log('Seed completed');
       process.exit(0);
     })
     .catch((err) => {
-      // eslint-disable-next-line no-console
       console.error('Seed failed', err);
       process.exit(1);
     });
 }
-
-
