@@ -1,22 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '../../../infra/database/entities/order.entity';
 
 export class CreateOrderItemDto {
   @ApiProperty({
-    description: 'Identificador único do produto',
-    example: 'prod-001',
-    minLength: 1
+    description: 'Identificador único do produto (UUID)',
+    example: '11111111-1111-1111-1111-111111111111',
+    minLength: 1,
   })
-  @IsString()
+  @IsUUID('4')
   @IsNotEmpty()
   productId: string;
 
   @ApiProperty({
     description: 'Quantidade do produto no pedido',
     example: 2,
-    minimum: 1
+    minimum: 1,
   })
   @IsNumber()
   @IsPositive()
@@ -25,7 +35,7 @@ export class CreateOrderItemDto {
   @ApiProperty({
     description: 'Preço unitário do produto (formato decimal como string)',
     example: '29.99',
-    pattern: '^\\d+\\.\\d{2}$'
+    pattern: '^\\d+\\.\\d{2}$',
   })
   @IsString()
   price: string;
@@ -36,7 +46,7 @@ export class CreateOrderDto {
     enum: OrderStatus,
     description: 'Status inicial do pedido (opcional, padrão: PENDING)',
     example: OrderStatus.PENDING,
-    required: false
+    required: false,
   })
   @IsEnum(OrderStatus)
   @IsOptional()
@@ -49,20 +59,18 @@ export class CreateOrderDto {
       {
         productId: 'prod-001',
         quantity: 2,
-        price: '29.99'
+        price: '29.99',
       },
       {
         productId: 'prod-002',
         quantity: 1,
-        price: '15.50'
-      }
+        price: '15.50',
+      },
     ],
-    minItems: 1
+    minItems: 1,
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
 }
-
-

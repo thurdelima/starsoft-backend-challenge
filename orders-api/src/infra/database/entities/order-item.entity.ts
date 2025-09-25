@@ -1,6 +1,7 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Order } from './order.entity';
+import { Product } from './product.entity';
 
 @Entity('order_items')
 export class OrderItem {
@@ -19,11 +20,11 @@ export class OrderItem {
   order: Order;
 
   @ApiProperty({
-    description: 'Identificador único do produto',
-    example: 'prod-001'
+    description: 'Produto associado ao item',
+    type: () => Product,
   })
-  @Column({ type: 'varchar' })
-  productId: string;
+  @ManyToOne(() => Product, { eager: true, onDelete: 'RESTRICT' })
+  product: Product;
 
   @ApiProperty({
     description: 'Quantidade do produto no pedido',

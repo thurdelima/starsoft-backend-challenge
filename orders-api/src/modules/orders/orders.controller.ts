@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { SearchOrdersDto } from './dto/search-orders.dto';
 import { OrderStatus } from '../../infra/database/entities/order.entity';
@@ -47,7 +47,7 @@ export class OrdersController {
       items: [
         {
           id: '39f858b0-b78c-48bb-9d2d-ae5d3718b2ec',
-          productId: 'prod-001',
+          productId: '11111111-1111-1111-1111-111111111111',
           quantity: 2,
           price: '29.99',
         },
@@ -190,53 +190,11 @@ export class OrdersController {
     return this.ordersService.findOne(id);
   }
 
-  @Patch(':id/status')
-  @ApiOperation({
-    summary: 'Atualizar status do pedido',
-    description:
-      'Atualiza o status de um pedido específico. Um evento será publicado no Kafka com as informações da atualização.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'ID único do pedido',
-    example: '84d1a71c-02ff-441f-9ba3-caa45a394f41',
-  })
-  @ApiOkResponse({
-    description: 'Status do pedido atualizado com sucesso',
-    type: OrderResponseDto,
-    example: {
-      id: '84d1a71c-02ff-441f-9ba3-caa45a394f41',
-      status: 'PROCESSING',
-      items: [
-        {
-          id: '39f858b0-b78c-48bb-9d2d-ae5d3718b2ec',
-          productId: 'prod-001',
-          quantity: 2,
-          price: '29.99',
-        },
-      ],
-      createdAt: '2025-09-25T01:21:15.092Z',
-      updatedAt: '2025-09-25T01:21:26.472Z',
-    },
-  })
-  @ApiNotFoundResponse({
-    description: 'Pedido não encontrado',
-    example: {
-      statusCode: 404,
-      message: 'Order not found',
-      error: 'Not Found',
-    },
-  })
-  @ApiBadRequestResponse({
-    description: 'Status inválido fornecido',
-    example: {
-      statusCode: 400,
-      message: ['status must be a valid enum value'],
-      error: 'Bad Request',
-    },
-  })
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
-    return this.ordersService.updateStatus(id, dto);
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar pedido (status e itens via upsert)' })
+  @ApiOkResponse({ description: 'Pedido atualizado', type: OrderResponseDto })
+  update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
+    return this.ordersService.update(id, dto);
   }
 
   @Delete(':id')

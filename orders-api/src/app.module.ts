@@ -6,9 +6,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Order } from './infra/database/entities/order.entity';
 import { OrderItem } from './infra/database/entities/order-item.entity';
+import { Product } from './infra/database/entities/product.entity';
 import { KafkaModule } from './common/kafka/kafka.module';
 import { ElasticsearchModule } from './common/elasticsearch/elasticsearch.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -21,13 +23,14 @@ import { OrdersModule } from './modules/orders/orders.module';
       username: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'marketplace',
-      entities: [Order, OrderItem],
+      entities: [Order, OrderItem, Product],
       synchronize: false,
       autoLoadEntities: false,
     }),
     KafkaModule,
     ElasticsearchModule,
     OrdersModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

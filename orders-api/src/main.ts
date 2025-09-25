@@ -1,38 +1,45 @@
-  import { NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppDataSource } from './infra/database/data-source';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Product } from './infra/database/entities/product.entity';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Orders API')
-    .setDescription(`
-      ## API de Gerenciamento de Pedidos
-      
-      Esta API permite o gerenciamento completo de pedidos de e-commerce, incluindo:
-      
-      - **CRUD de Pedidos**: Criar, listar, buscar, atualizar e deletar pedidos
-      - **Integração com Kafka**: Eventos de criação e atualização de status são publicados automaticamente
-      - **Busca Avançada**: Filtros por status, data, itens através do Elasticsearch
-      - **Validação de Dados**: Validação automática de payloads com mensagens de erro detalhadas
-      
-      ### Status dos Pedidos
-      - \`PENDING\`: Pedido criado, aguardando processamento
-      - \`PROCESSING\`: Pedido em processamento
-      - \`SHIPPED\`: Pedido enviado
-      - \`DELIVERED\`: Pedido entregue
-      - \`CANCELED\`: Pedido cancelado
-      
-      ### Eventos Kafka
-      - \`order_created\`: Publicado quando um novo pedido é criado
-      - \`order_status_updated\`: Publicado quando o status de um pedido é atualizado
-    `)
+    .setDescription(
+      [
+        '# API de Gerenciamento de Pedidos',
+        '',
+        'Funcionalidades:',
+        '- CRUD de pedidos (criar, listar, buscar, atualizar status, deletar)',
+        '- Publicação de eventos no Kafka',
+        '- Busca avançada via Elasticsearch (status, datas, itens, id)',
+        '',
+        'Status dos pedidos:',
+        '- PENDING | PROCESSING | SHIPPED | DELIVERED | CANCELED',
+        '',
+        'Tópicos Kafka:',
+        '- order_created',
+        '- order_status_updated',
+      ].join('\n'),
+    )
     .setVersion('1.0.0')
-    .setContact('Desenvolvedor', 'https://github.com/arthur-lima', 'arthur@example.com')
+    .setContact(
+      'Desenvolvedor',
+      'https://github.com/thurdelima',
+      'thurdelima@gmail.com',
+    )
     .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .addServer('http://localhost:3000', 'Servidor de Desenvolvimento')
     .addServer('https://api.example.com', 'Servidor de Produção')
@@ -44,6 +51,11 @@ async function bootstrap() {
   await AppDataSource.initialize();
   await AppDataSource.runMigrations();
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 3000);
+  await app.listen(port);
+  const url = await app.getUrl();
+  const prettyUrl = url.replace('[::1]', 'localhost');
+  console.log(`🚀 API running on: ${prettyUrl}`);
+  console.log(`📘 Swagger: ${prettyUrl}/api-docs`);
 }
 bootstrap();
