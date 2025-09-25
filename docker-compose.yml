@@ -61,6 +61,24 @@ services:
     networks:
       - backend
 
+  migrate-and-seed:
+    image: node:20-alpine
+    container_name: migrate-and-seed
+    working_dir: /app
+    volumes:
+      - ./orders-api:/app
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=marketplace
+    command: sh -c "npm ci --quiet && npm run db:migrate && npm run db:seed"
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
