@@ -25,7 +25,10 @@ type OrderView = {
 };
 
 type IndexedOrderItemDoc = {
+  id: string;
   productId: string;
+  productName: string;
+  productPrice: string;
   quantity: number;
   price: string;
 };
@@ -34,6 +37,7 @@ type IndexedOrderDoc = {
   id: string;
   status: OrderStatus;
   createdAt: string | Date;
+  updatedAt: string | Date;
   deleted: boolean;
   items: IndexedOrderItemDoc[];
 };
@@ -90,11 +94,21 @@ export class OrdersService {
     });
   }
 
-  async findAll(): Promise<Order[]> {
-    return this.ordersRepo.find({
-      where: { deleted: false },
-      relations: ['items', 'items.product'],
-    });
+  async findAll(filters?: {
+    id?: string;
+    status?: OrderStatus;
+    fromDate?: string;
+    toDate?: string;
+    item?: string;
+  }): Promise<Order[]> {
+    if (!filters || Object.keys(filters).length === 0) {
+      return this.ordersRepo.find({
+        where: { deleted: false },
+        relations: ['items', 'items.product'],
+      });
+    }
+
+    return this.searchWithElasticSearch(filters);
   }
 
   async findOne(id: string): Promise<Order> {
@@ -153,13 +167,13 @@ export class OrdersService {
     await this.indexOrder(order);
   }
 
-  async search(params: {
+  private async searchWithElasticSearch(params: {
     id?: string;
     status?: OrderStatus;
     fromDate?: string;
     toDate?: string;
     item?: string;
-  }) {
+  }): Promise<Order[]> {
     const must: Array<Record<string, unknown>> = [];
     must.push({ term: { deleted: false } });
     if (params.id) must.push({ term: { id: params.id } });
@@ -190,19 +204,42 @@ export class OrdersService {
       query: { bool: { must } },
     });
     const hits = result.hits?.hits ?? [];
+
     return hits
       .filter((h) => Boolean(h._source))
       .map((h) => {
         const src = h._source as IndexedOrderDoc;
-        const { id: _ignored, ...rest } = src ?? ({} as IndexedOrderDoc);
-        return { id: String(h._id), ...rest };
+        return {
+          id: String(h._id),
+          status: src.status,
+          createdAt: new Date(src.createdAt),
+          updatedAt: new Date(src.updatedAt),
+          deleted: src.deleted,
+          items: src.items.map((item) => ({
+            id: item.id,
+            order: {} as Order,
+            product: {
+              id: item.productId,
+              name: item.productName,
+              price: item.productPrice,
+              stockQty: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            } as Product,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        } as Order;
       });
   }
 
   private async indexOrder(order: Order): Promise<void> {
     await this.ensureIndex();
     const docItems = (order.items || []).map((it) => ({
+      id: it.id,
       productId: it.product?.id,
+      productName: it.product?.name,
+      productPrice: it.product?.price,
       quantity: it.quantity,
       price: it.price,
     }));
@@ -213,6 +250,7 @@ export class OrdersService {
         id: order.id,
         status: order.status,
         createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
         deleted: order.deleted,
         items: docItems,
       },
@@ -256,7 +294,6 @@ export class OrdersService {
           `Insufficient stock for product ${product.id}. Available: ${product.stockQty}, Requested: ${i.quantity}`,
         );
 
-      // Debitar estoque do produto
       product.stockQty -= i.quantity;
       await productsRepo.save(product);
 
@@ -344,11 +381,15 @@ export class OrdersService {
             id: { type: 'keyword' },
             status: { type: 'keyword' },
             createdAt: { type: 'date' },
+            updatedAt: { type: 'date' },
             deleted: { type: 'boolean' },
             items: {
               type: 'nested',
               properties: {
+                id: { type: 'keyword' },
                 productId: { type: 'keyword' },
+                productName: { type: 'text' },
+                productPrice: { type: 'scaled_float', scaling_factor: 100 },
                 quantity: { type: 'integer' },
                 price: { type: 'scaled_float', scaling_factor: 100 },
               },

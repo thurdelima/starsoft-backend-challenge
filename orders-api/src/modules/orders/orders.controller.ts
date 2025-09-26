@@ -24,7 +24,6 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
-import { SearchOrdersDto } from './dto/search-orders.dto';
 import { OrderStatus } from '../../infra/database/entities/order.entity';
 
 @ApiTags('Pedidos')
@@ -77,23 +76,9 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({
-    summary: 'Listar todos os pedidos',
+    summary: 'Listar pedidos com filtros opcionais',
     description:
-      'Retorna uma lista de todos os pedidos cadastrados no sistema.',
-  })
-  @ApiOkResponse({
-    description: 'Lista de pedidos retornada com sucesso',
-    type: [OrderResponseDto],
-  })
-  findAll() {
-    return this.ordersService.findAll();
-  }
-
-  @Get('search')
-  @ApiOperation({
-    summary: 'Buscar pedidos com filtros',
-    description:
-      'Busca pedidos utilizando filtros avançados através do Elasticsearch. Permite filtrar por ID, status, intervalo de datas e itens específicos.',
+      'Retorna uma lista de pedidos. Sem filtros, retorna todos os pedidos. Com filtros, utiliza busca avançada via Elasticsearch.',
   })
   @ApiQuery({
     name: 'id',
@@ -127,41 +112,19 @@ export class OrdersController {
     example: 'prod-001',
   })
   @ApiOkResponse({
-    description: 'Resultados da busca retornados com sucesso',
+    description: 'Lista de pedidos retornada com sucesso',
     type: [OrderResponseDto],
-    example: [
-      {
-        id: '84d1a71c-02ff-441f-9ba3-caa45a394f41',
-        status: 'PENDING',
-        createdAt: '2025-09-25T01:21:15.092Z',
-        items: [
-          {
-            id: '39f858b0-b78c-48bb-9d2d-ae5d3718b2ec',
-            productId: 'prod-001',
-            quantity: 2,
-            price: '29.99',
-          },
-        ],
-      },
-    ],
   })
-  @ApiBadRequestResponse({
-    description: 'Parâmetros de busca inválidos',
-    example: {
-      statusCode: 400,
-      message: 'Invalid date format',
-      error: 'Bad Request',
-    },
-  })
-  search(
+  findAll(
     @Query('id') id?: string,
     @Query('status') status?: OrderStatus,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
     @Query('item') item?: string,
   ) {
-    return this.ordersService.search({ id, status, fromDate, toDate, item });
+    return this.ordersService.findAll({ id, status, fromDate, toDate, item });
   }
+
 
   @Get(':id')
   @ApiOperation({
