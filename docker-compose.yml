@@ -22,7 +22,7 @@ services:
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT://kafka:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
@@ -41,7 +41,7 @@ services:
     container_name: kafka-ui
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=host.docker.internal:9092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=
       - DYNAMIC_CONFIG_ENABLED=true
     ports:
@@ -52,6 +52,32 @@ services:
       - backend
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  app:
+    build: ./orders-api
+    container_name: orders-api
+    working_dir: /usr/src/app
+    command: sh -c "npm ci --quiet && npm run start:dev"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=marketplace
+      - KAFKA_BROKERS=kafka:9092
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+    volumes:
+      - ./orders-api:/usr/src/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - kafka
+      - elasticsearch
+    networks:
+      - backend
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4

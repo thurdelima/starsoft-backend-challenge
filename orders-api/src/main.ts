@@ -23,6 +23,7 @@ async function bootstrap() {
         '',
         'Funcionalidades:',
         '- CRUD de pedidos (criar, listar, buscar, atualizar status, deletar)',
+        '- CRUD de produtos (criar, listar, buscar, atualizar, deletar)',
         '- Publicação de eventos no Kafka',
         '- Busca avançada via Elasticsearch (status, datas, itens, id)',
         '',
@@ -35,15 +36,8 @@ async function bootstrap() {
       ].join('\n'),
     )
     .setVersion('1.0.0')
-    .setContact(
-      'Desenvolvedor',
-      'https://github.com/thurdelima',
-      'thurdelima@gmail.com',
-    )
-    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
-    .addServer('http://localhost:3000', 'Servidor de Desenvolvimento')
-    .addServer('https://api.example.com', 'Servidor de Produção')
     .addTag('Pedidos', 'Operações relacionadas ao gerenciamento de pedidos')
+    .addTag('Produtos', 'Operações relacionadas ao gerenciamento de produtos')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
