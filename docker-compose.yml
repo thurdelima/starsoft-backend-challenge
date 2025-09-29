@@ -70,6 +70,7 @@ services:
       - ELASTICSEARCH_NODE=http://elasticsearch:9200
     volumes:
       - ./orders-api:/usr/src/app
+      - /usr/src/app/node_modules
     ports:
       - "3000:3000"
     depends_on:
