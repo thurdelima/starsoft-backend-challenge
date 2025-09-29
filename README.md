@@ -1,123 +1,164 @@
-# Teste para Desenvolvedor(a) Back-End Node.js/Nest.js
+## 🚀 Orders API — NestJS + PostgreSQL + Kafka + Elasticsearch
 
-## Introdução
+API de gerenciamento de pedidos e produtos com NestJS, PostgreSQL (TypeORM + migrações), Kafka (kafkajs), Elasticsearch (busca avançada) e documentação via Swagger. Projeto preparado para rodar integralmente com Docker Compose (incluindo a própria API).
 
-Bem-vindo(a) ao processo seletivo para a posição de **Desenvolvedor(a) Back-End** em nossa equipe! Este teste tem como objetivo avaliar suas habilidades técnicas em Node.js, Nest.js e outras tecnologias mencionadas na descrição da vaga.
+### ✨ Funcionalidades
+- 🧾 CRUD de pedidos (criar, listar, buscar, atualizar via upsert, soft delete)
+- 📦 CRUD de produtos (criar, listar, buscar, atualizar, remover)
+- 📣 Eventos Kafka: `order_created` e `order_updated`
+- 🔎 Elasticsearch para busca de pedidos
+  - 💽 Indexação completa do pedido e itens (sem round-trip no DB)
+- 🗑️ Soft delete de pedidos (`deleted=true`), sem restaurar estoque
+- 📘 Swagger com exemplos de payloads
+- 🧰 Logs estruturados e validações (class-validator)
 
-## Instruções
-
-- Faça um **fork** deste repositório para o seu GitHub pessoal.
-- Desenvolva as soluções solicitadas abaixo, seguindo as **melhores práticas de desenvolvimento**.
-- Após a conclusão, envie o link do seu repositório para avaliação.
-- Sinta-se à vontade para adicionar qualquer documentação ou comentários que julgar necessário.
-
-## Desafio
-
-### Contexto
-
-Você foi designado para desenvolver um sistema de gerenciamento de pedidos para um e-commerce. O sistema deve permitir que os clientes:
-
-- Criem, visualizem, atualizem e cancelem pedidos.
-- Cada pedido deve conter: identificador do pedido, itens (com quantidade e preço), status do pedido (pendente, processando, enviado, entregue, cancelado), data de criação e atualização.
-- O sistema deve comunicar eventos de criação e atualização de pedidos via **Kafka** para outros serviços (por exemplo, sistema de estoque, notificações).
-- O sistema deve indexar e permitir a busca de pedidos utilizando **Elasticsearch**, proporcionando pesquisas avançadas.
-
-### Requisitos
-
-1. **Configuração do Ambiente**
-
-   - Configure um ambiente de desenvolvimento utilizando **Docker** e **Docker-compose**, incluindo:
-     - Aplicação Node.js com **Nest.js**.
-     - Banco de dados **PostgreSQL**.
-     - Servidor **Kafka** (pode utilizar imagens como `bitnami/kafka` ou similares).
-     - **Elasticsearch** para indexação e busca .
-   - A aplicação deve ser iniciada com um único comando (`docker-compose up`).
-
-2. **API RESTful**
-
-   - Implemente uma API RESTful para gerenciamento de pedidos.
-   - Utilize **Nest.js** seguindo as melhores práticas para estruturação de módulos, controladores e serviços.
-   - Utilize **TypeORM** para interação com o banco de dados **PostgreSQL**.
-   - Assegure-se de que as operações de CRUD (Create, Read, Update, Delete) estão implementadas.
-
-3. **Comunicação via Kafka**
-
-   - Implemente a publicação de eventos em **Kafka**:
-     - Ao criar um novo pedido, publique um evento `order_created`.
-     - Ao atualizar o status de um pedido, publique um evento `order_status_updated`.
-     - Os eventos devem conter informações relevantes em formato JSON.
-
-4. **Integração com Elasticsearch**
-
-   - Implemente a indexação dos pedidos no **Elasticsearch**:
-     - Ao criar ou atualizar um pedido, sincronize os dados com o Elasticsearch.
-   - Implemente endpoints na API que permitam a busca e filtragem de pedidos utilizando as capacidades de pesquisa do Elasticsearch.
-   - Permita que os usuários realizem pesquisas por:
-     - Identificador do pedido.
-     - Status do pedido.
-     - Intervalo de datas.
-     - Itens contidos no pedido.
-
-5. **Clean Code e Boas Práticas**
-
-   - Aplique os princípios de **Clean Code** em toda a sua implementação.
-   - Utilize um padrão de código consistente e configure **ESLint** e **Prettier** no projeto.
-   - Documente o código quando necessário para melhorar a legibilidade.
-
-6. **Dockerização**
-
-   - Certifique-se de que a aplicação e todos os serviços necessários estejam corretamente containerizados.
-   - Utilize **Docker-compose** para orquestrar os contêineres.
-
-7. **Testes**
-
-   - Escreva testes unitários e/ou de integração para as principais funcionalidades da aplicação utilizando **Jest** (test runner padrão do Nest.js).
-   - Os testes devem cobrir, no mínimo, os serviços e controladores.
-
-8. **Documentação da API**
-
-   - Forneça documentação da API utilizando **Swagger** (integrado ao Nest.js).
-   - A documentação deve estar acessível através de uma rota, por exemplo, `/api-docs`.
-
-9. **Logs e Monitoramento**
-
-   - Implemente logs estruturados utilizando um middleware ou interceptador do Nest.js.
-   - Registre informações importantes como erros, acessos às rotas e eventos de negócio.
-
-### Diferenciais (Desejável)
-
-- **Monitoramento e Logging Avançado**
-
-  - Implemente ferramentas de monitoramento como **Prometheus** e **Grafana**.
-  - Configure logs centralizados utilizando **Elastic Stack** (ELK).
-
-### Observações
-
-- Caso não seja possível implementar todos os requisitos, explique as razões e descreva como você abordaria a solução.
-- Sinta-se à vontade para adicionar funcionalidades extras que julgar relevantes.
-- Demonstre criatividade e inovação em sua solução.
-
-## Entrega
-
-- O código deve estar disponível em um repositório Git (preferencialmente GitHub) público.
-- Inclua um arquivo `README.md` com:
-  - Instruções claras sobre como configurar e executar a aplicação.
-  - Descrição das funcionalidades implementadas.
-  - Possíveis limitações ou melhorias futuras.
-
-## Avaliação
-
-Os seguintes aspectos serão considerados na avaliação:
-
-- **Funcionalidade**: se a aplicação atende aos requisitos propostos.
-- **Qualidade do Código**: organização, legibilidade e aderência às boas práticas.
-- **Uso das Tecnologias**: implementação correta e eficaz das ferramentas solicitadas.
-- **Boas Práticas**: aplicação de princípios de Clean Code e padrões de projeto.
-- **Documentação**: clareza das instruções e documentação fornecidas.
-- **Testes**: qualidade e abrangência dos testes implementados.
-- **Histórico de Commits**: uso adequado do Git com commits bem descritos.
+### 🧱 Arquitetura (alto nível)
+- 🟢 `orders-api` (NestJS): Orders, Products, TypeORM, KafkaJS, ES client
+- 🐘 Postgres: persistência via TypeORM (migrations)
+- 🐳 Kafka (Bitnami KRaft): broker único + Kafka UI
+- 🧠 Elasticsearch: índice `orders`
 
 ---
 
-Boa sorte! Estamos ansiosos para conhecer o seu trabalho e potencial.
+## ▶️ Como executar
 
+Pré-requisitos: Docker e Docker Compose instalados.
+
+1) 🐳 Subir tudo com Docker Compose
+```bash
+docker compose up -d
+```
+
+URLs úteis:
+- ✅ API: http://localhost:3000
+- 📘 Swagger: http://localhost:3000/api-docs
+- 📊 Kafka UI: http://localhost:8080
+- 🔎 Elasticsearch: http://localhost:9200
+
+2) 📝 Ver logs rápidos da API
+```bash
+docker logs -f orders-api
+```
+
+3) 🔁 Derrubar e subir novamente
+```bash
+docker compose down --remove-orphans
+docker compose up -d
+```
+
+ℹ️ Observação: O serviço `migrate-and-seed` roda migrations e seeds automaticamente na subida.
+
+---
+
+## 🔧 Variáveis de ambiente (principais)
+As variáveis do container `app` já estão definidas no `docker-compose.yml` para a rede interna:
+- `DB_HOST=postgres`
+- `DB_PORT=5432`
+- `DB_USER=postgres`
+- `DB_PASSWORD=postgres`
+- `DB_NAME=marketplace`
+- `KAFKA_BROKERS=kafka:9092`
+- `ELASTICSEARCH_NODE=http://elasticsearch:9200`
+
+Para rodar a API localmente, utilize `.env.local` (ex.: `DB_HOST=localhost`, `KAFKA_BROKERS=localhost:9092`, `ELASTICSEARCH_NODE=http://localhost:9200`).
+
+---
+
+## 📚 Endpoints (resumo)
+- 🧰 Products
+  - `GET /products` — lista produtos
+  - `POST /products` — cria produto
+  - `PATCH /products/:id` — atualiza produto
+  - `DELETE /products/:id` — remove produto
+
+- 🧾 Orders
+  - `GET /orders` — lista (com filtros via ES)
+  - `GET /orders/:id` — busca por id
+  - `POST /orders` — cria pedido (valida estoque, publica `order_created`)
+  - `PATCH /orders/:id` — upsert de itens/atualização (publica `order_updated`)
+  - `DELETE /orders/:id` — soft delete (mantém indexado; sem retorno de estoque)
+
+📘 Documentação: `http://localhost:3000/api-docs`.
+
+---
+
+## 🧪 Fluxo básico (cURL)
+1) 📦 Listar produtos
+```bash
+curl -s http://localhost:3000/products | jq .
+```
+
+2) ➕ Criar pedido
+```bash
+curl -s -X POST http://localhost:3000/orders \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "status":"PENDING",
+    "items":[
+      {"productId":"<UUID_prod_1>","quantity":1,"price":"129.90"}
+    ]
+  }' | jq .
+```
+
+3) 🔄 Atualizar pedido (upsert itens)
+```bash
+curl -s -X PATCH http://localhost:3000/orders/<ORDER_ID> \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "status":"PROCESSING",
+    "items":[
+      {"id":"<ITEM_ID_EXISTENTE>","quantity":2,"price":"129.90"},
+      {"productId":"<UUID_prod_2>","quantity":1,"price":"199.90"}
+    ]
+  }' | jq .
+```
+
+4) 🗑️ Deletar pedido (soft delete)
+```bash
+curl -i -X DELETE http://localhost:3000/orders/<ORDER_ID>
+```
+
+---
+
+## ✅ Testes
+Executar testes (no diretório `orders-api`):
+```bash
+cd orders-api
+npm test
+```
+
+Cobertura de testes unitários (principais):
+- 🧪 `ProductsService` e `ProductsController`
+- 🧪 `OrdersService` (create, findAll, findOne, update, remove)
+- 🧪 DTOs: `CreateProductDto`, `UpdateProductDto`, `CreateOrderDto`, `UpdateOrderDto`, `OrderResponseDto`
+
+---
+
+## 🧭 Decisões técnicas
+- 🧩 TypeORM com migrações (sem `synchronize: true`)
+- 🔎 ES retorna dados completos do pedido (sem segunda consulta ao Postgres)
+- 🗑️ Soft delete (`deleted`) filtrado em `findAll`, `findOne` e buscas no ES
+- 📣 Eventos Kafka com `kafkajs`
+
+---
+
+## 🧯 Troubleshooting
+- 🔌 Porta 3000 ocupada: pare instâncias anteriores (containers/locais)
+- 📊 Kafka UI sem tópicos: Kafka deve anunciar `kafka:9092` e UI usar `kafka:9092`
+- 🧭 Kafka local vs Docker: fora do Docker use `PLAINTEXT://localhost:9092`; dentro, `PLAINTEXT://kafka:9092`
+- 🧠 Elasticsearch: versão 8.13.4; cliente Node compatível instalado
+
+---
+
+## 🛠️ Scripts úteis
+No host:
+```bash
+docker compose up -d                    # sobe todos os serviços
+docker compose down --remove-orphans    # derruba serviços
+docker logs -f orders-api               # logs da API
+```
+
+---
+
+## 📄 Licença
+MIT
