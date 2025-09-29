@@ -133,7 +133,7 @@ npm test
 
 Cobertura de testes unitários (principais):
 - 🧪 `ProductsService` e `ProductsController`
-- 🧪 `OrdersService` (create, findAll, findOne, update, remove)
+- 🧪 `OrdersService` e `OrdersController` (create, findAll, findOne, update, remove)
 - 🧪 DTOs: `CreateProductDto`, `UpdateProductDto`, `CreateOrderDto`, `UpdateOrderDto`, `OrderResponseDto`
 
 ---
