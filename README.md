@@ -1,5 +1,9 @@
 ## 🚀 Orders API — NestJS + PostgreSQL + Kafka + Elasticsearch
 
+### 🎨 Design System
+
+![Architecture](./architecture.png)
+
 API de gerenciamento de pedidos e produtos com NestJS, PostgreSQL (TypeORM + migrações), Kafka (kafkajs), Elasticsearch (busca avançada) e documentação via Swagger. Projeto preparado para rodar integralmente com Docker Compose (incluindo a própria API).
 
 ### ✨ Funcionalidades
