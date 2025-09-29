@@ -26,7 +26,7 @@ Pré-requisitos: Docker e Docker Compose instalados.
 
 1) 🐳 Subir tudo com Docker Compose
 ```bash
-docker compose up -d
+docker compose up ou docker compose up -d
 ```
 
 URLs úteis:
@@ -43,7 +43,7 @@ docker logs -f orders-api
 3) 🔁 Derrubar e subir novamente
 ```bash
 docker compose down --remove-orphans
-docker compose up -d
+docker compose up -d ou docker compose up -d
 ```
 
 ℹ️ Observação: O serviço `migrate-and-seed` roda migrations e seeds automaticamente na subida.
@@ -153,9 +153,9 @@ Cobertura de testes unitários (principais):
 ## 🛠️ Scripts úteis
 No host:
 ```bash
-docker compose up -d                    # sobe todos os serviços
-docker compose down --remove-orphans    # derruba serviços
-docker logs -f orders-api               # logs da API
+docker compose up -d ou docker compose up -d  # sobe todos os serviços
+docker compose down --remove-orphans          # derruba serviços
+docker logs -f orders-api                     # logs da API
 ```
 
 ---
