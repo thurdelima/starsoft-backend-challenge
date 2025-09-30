@@ -12,7 +12,7 @@ API de gerenciamento de pedidos e produtos com NestJS, PostgreSQL (TypeORM + mig
 - 📣 Eventos Kafka: `order_created` e `order_updated`
 - 🔎 Elasticsearch para busca de pedidos
   - 💽 Indexação completa do pedido e itens (sem round-trip no DB)
-- 🗑️ Soft delete de pedidos (`deleted=true`), sem restaurar estoque
+- 🗑️ Soft delete de pedidos (`deleted=true`)
 - 📘 Swagger com exemplos de payloads
 - 🧰 Logs estruturados e validações (class-validator)
 
@@ -47,7 +47,7 @@ docker logs -f orders-api
 3) 🔁 Derrubar e subir novamente
 ```bash
 docker compose down --remove-orphans
-docker compose up -d ou docker compose up -d
+docker compose up ou docker compose up -d
 ```
 
 ℹ️ Observação: O serviço `migrate-and-seed` roda migrations e seeds automaticamente na subida.
@@ -157,7 +157,7 @@ Cobertura de testes unitários (principais):
 ## 🛠️ Scripts úteis
 No host:
 ```bash
-docker compose up -d ou docker compose up -d  # sobe todos os serviços
+docker compose up ou docker compose up -d     # sobe todos os serviços
 docker compose down --remove-orphans          # derruba serviços
 docker logs -f orders-api                     # logs da API
 ```
