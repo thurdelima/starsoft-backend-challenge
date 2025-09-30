@@ -136,12 +136,25 @@ Cobertura de testes unitários (principais):
 - 🧪 `OrdersService` e `OrdersController` (create, findAll, findOne, update, remove)
 - 🧪 DTOs: `CreateProductDto`, `UpdateProductDto`, `CreateOrderDto`, `UpdateOrderDto`, `OrderResponseDto`
 
+### 📝 Logs
+
+Exemplo de log em nível INFO (evento de domínio):
+
+```bash
+[2025-09-30 12:34:56.812] INFO  (orders-api/12345 on host): OrderCreated
+    correlationId: "req-7f3f2f9b"
+    orderId: "8b6e9d1c-9a2d-4b83-8b7f-1e92a7a5a1ab"
+    status: "PENDING"
+    itemsCount: 2
+    totalAmount: "329.80"
+```
+
 ---
 
 ## 🧭 Decisões técnicas
 - 🧩 TypeORM com migrações (sem `synchronize: true`)
-- 🔎 ES retorna dados completos do pedido (sem segunda consulta ao Postgres)
-- 🗑️ Soft delete (`deleted`) filtrado em `findAll`, `findOne` e buscas no ES
+- 🔎 ElasticSearch retorna dados completos do pedido (sem segunda consulta ao Postgres)
+- 🗑️ Soft delete (`deleted`) filtrado em `findAll`, `findOne` e buscas no ElasticSearch
 - 📣 Eventos Kafka com `kafkajs`
 
 ---
